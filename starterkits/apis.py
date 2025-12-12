@@ -30,6 +30,7 @@ def get_boundaries(country):
   country_name = pycountry.countries.get(alpha_3=country).name # type: ignore
   boundaries = pygadm.Items(country_name, content_level=0)
   boundaries.to_file(f'Data/{country}/Boundaries/{country}_adm_0.gpkg')
+  print(f"Downloaded: {country_name} boundaries to Data/{country}/Boundaries/{country}_adm_0.gpkg")
 
 def get_population_data(country, resolution):
   os.makedirs(f'Data/{country}/Population', exist_ok=True)
