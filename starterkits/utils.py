@@ -30,6 +30,7 @@ def mask_raster_with_geometry(raster_path, shapes, output_path):
     """
     if isinstance(shapes, str):
         shapes = gpd.read_file(shapes)
+        shapes = shapes.geometry.values
     elif isinstance(shapes, gpd.GeoDataFrame):
         shapes = shapes.geometry.values
     elif isinstance(shapes, list):
