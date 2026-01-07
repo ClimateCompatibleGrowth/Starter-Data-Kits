@@ -18,7 +18,6 @@ def handle_exceptions(func):
             return None
     return wrapper
 
-@handle_exceptions
 def mask_raster_with_geometry(raster_path, shapes, output_path):
     """
     Mask a raster using a list of geometries or a GeoDataFrame.
@@ -29,8 +28,14 @@ def mask_raster_with_geometry(raster_path, shapes, output_path):
                                        The geometries must be in the same CRS as the raster.
         output_path (str): Path to save the masked raster.
     """
-    if hasattr(shapes, 'geometry'):
+    if isinstance(shapes, str):
+        shapes = gpd.read_file(shapes)
+    elif isinstance(shapes, gpd.GeoDataFrame):
         shapes = shapes.geometry.values
+    elif isinstance(shapes, list):
+        pass
+    else:
+        raise ValueError("shapes must be a GeoDataFrame or a path to a GeoDataFrame")
 
     with rasterio.open(raster_path) as src:
         out_image, out_transform = rasterio.mask.mask(src, shapes, crop=True)
@@ -48,7 +53,6 @@ def mask_raster_with_geometry(raster_path, shapes, output_path):
     
     print(f"Masked raster saved to {output_path}")
 
-@handle_exceptions
 def unzip_file(zip_path, extract_to):
     """
     Unzip a file to a destination directory.
