@@ -66,7 +66,7 @@ def get_population_data(country, resolution, year=2025):
     """
     os.makedirs(f'Data/{country}/Population', exist_ok=True)
     if resolution == '1km':
-      download_file(f'https://data.worldpop.org/GIS/Population/Global_2015_2030/R2025A/2023/{country}/v1/1km_ua/constrained/{country.lower()}_pop_2023_CN_1km_R2025A_UA_v1.tif', f'Data/{country}/Population/{country}_pop.tif', 'Population')
+      download_file(f'https://data.worldpop.org/GIS/Population/Global_2015_2030/R2025A/{year}/{country}/v1/1km_ua/constrained/{country.lower()}_pop_{year}_CN_1km_R2025A_UA_v1.tif', f'Data/{country}/Population/{country}_{year}_pop_r{resolution}.tif', 'Population')
     elif resolution == '100m':
       download_file(f'https://data.worldpop.org/GIS/Population/Global_2015_2030/R2025A/{year}/{country}/v1/100m/constrained/{country.lower()}_pop_{year}_CN_100m_R2025A_v1.tif', f'Data/{country}/Population/{country}_{year}_pop_r{resolution}.tif', 'Population')
 
