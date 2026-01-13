@@ -103,7 +103,14 @@ def get_solar_data(country):
         country (str): ISO3 country code.
     """
     os.makedirs(f'Data/{country}/Solar irradiation', exist_ok=True)
-    country_name = pycountry.countries.get(alpha_3=country).name # type: ignore
+    if country == 'COG':
+      country_name = 'Republic of the Congo'
+    elif country == 'COD':
+      country_name = 'Democratic Republic of the Congo'
+    elif country == 'CIV':
+      country_name = 'Cote d Ivoire'
+    else:
+      country_name = pycountry.countries.get(alpha_3=country).name # type: ignore
     download_file(f"https://api.globalsolaratlas.info/download/{country_name}/{country_name}_GISdata_LTAym_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF.zip", f'Data/{country}/Solar irradiation/{country}_solar_irradiance.zip', 'Solar irradiation')
     unzip_file(f'Data/{country}/Solar irradiation/{country}_solar_irradiance.zip', f'Data/{country}/Solar irradiation')
   
