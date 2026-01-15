@@ -4,7 +4,8 @@ import pygadm
 import osmnx as ox
 import time
 import requests
-from .utils import handle_exceptions, mask_raster_with_geometry, unzip_file
+import math
+from .utils import handle_exceptions, mask_raster_with_geometry, unzip_file, merge_rasters
 
 
 def download_file(url, path, name):
@@ -126,7 +127,37 @@ def get_dem_data(country, api_key='demoapikeyot2022'):
     boundaries = pygadm.Items(admin=country, content_level=0)
     boundaries.crs = 4326
     west, south, east, north = boundaries.total_bounds
-    download_file(f'https://portal.opentopography.org/API/globaldem?demtype=NASADEM&south={south}&north={north}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}', f'Data/{country}/Elevation/{country}_dem.tif', 'Elevation')
+    
+    # Estimate area of the bounding box in km2
+    avg_lat = (south + north) / 2
+    height_km = (north - south) * 111
+    width_km = (east - west) * 111 * math.cos(math.radians(avg_lat))
+    area_km2 = height_km * width_km
+    
+    output_path = f'Data/{country}/Elevation/{country}_dem.tif'
+    
+    if area_km2 > 450000:
+        print(f"Area is large ({area_km2:.0f} km2), splitting into two regions.")
+        mid_lat = (south + north) / 2
+        
+        # Region 1: South
+        url1 = f'https://portal.opentopography.org/API/globaldem?demtype=NASADEM&south={south}&north={mid_lat}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}'
+        path1 = f'Data/{country}/Elevation/{country}_dem_part1.tif'
+        download_file(url1, path1, 'Elevation Part 1')
+        
+        # Region 2: North
+        url2 = f'https://portal.opentopography.org/API/globaldem?demtype=NASADEM&south={mid_lat}&north={north}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}'
+        path2 = f'Data/{country}/Elevation/{country}_dem_part2.tif'
+        download_file(url2, path2, 'Elevation Part 2')
+        
+        merge_rasters([path1, path2], output_path)
+        
+        # Cleanup
+        os.remove(path1)
+        os.remove(path2)
+    else:
+        url = f'https://portal.opentopography.org/API/globaldem?demtype=NASADEM&south={south}&north={north}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}'
+        download_file(url, output_path, 'Elevation')
 
 @handle_exceptions
 def get_ntl_data(country):
