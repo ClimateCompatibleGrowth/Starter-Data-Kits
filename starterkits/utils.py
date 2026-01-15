@@ -63,6 +63,7 @@ def merge_rasters(raster_paths, output_path):
         raster_paths (list): List of paths to the raster files to merge.
         output_path (str): Path to save the merged raster.
     """
+    print(f"Merging {len(raster_paths)} rasters into {output_path}")
     src_files_to_mosaic = []
     for fp in raster_paths:
         src = rasterio.open(fp)
