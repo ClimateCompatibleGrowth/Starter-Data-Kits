@@ -57,33 +57,61 @@ def mask_raster_with_geometry(raster_path, shapes, output_path):
 
 def merge_rasters(raster_paths, output_path):
     """
-    Merge multiple rasters into a single file.
+    Merge multiple rasters into a single file sequentially to save RAM.
 
     Args:
         raster_paths (list): List of paths to the raster files to merge.
         output_path (str): Path to save the merged raster.
     """
-    print(f"Merging {len(raster_paths)} rasters into {output_path}")
-    src_files_to_mosaic = []
-    for fp in raster_paths:
-        src = rasterio.open(fp)
-        src_files_to_mosaic.append(src)
+    if not raster_paths:
+        return
 
-    mosaic, out_trans = merge(src_files_to_mosaic)
+    print(f"Merging {len(raster_paths)} rasters into {output_path} (Sequential mode)")
     
-    out_meta = src_files_to_mosaic[0].meta.copy()
-    out_meta.update({
-        "driver": "GTiff",
-        "height": mosaic.shape[1],
-        "width": mosaic.shape[2],
-        "transform": out_trans
-    })
+    # Start with the first raster
+    current_mosaic_path = raster_paths[0]
+    temp_files = []
 
-    with rasterio.open(output_path, "w", **out_meta) as dest:
-        dest.write(mosaic)
-    
-    for src in src_files_to_mosaic:
-        src.close()
+    for i in range(1, len(raster_paths)):
+        next_raster_path = raster_paths[i]
+        
+        # Define a temporary path for the intermediate merge result
+        temp_out = output_path.replace('.tif', f'_temp_merge_{i}.tif')
+        temp_files.append(temp_out)
+        
+        with rasterio.open(current_mosaic_path) as src1, rasterio.open(next_raster_path) as src2:
+            mosaic, out_trans = merge([src1, src2])
+            out_meta = src1.meta.copy()
+            out_meta.update({
+                "driver": "GTiff",
+                "height": mosaic.shape[1],
+                "width": mosaic.shape[2],
+                "transform": out_trans
+            })
+            
+            with rasterio.open(temp_out, "w", **out_meta) as dest:
+                dest.write(mosaic)
+        
+        current_mosaic_path = temp_out
+
+    # Move the final intermediate file to the final output path
+    # OR if there was only 1 raster, just copy it/save it
+    if len(raster_paths) == 1:
+        with rasterio.open(raster_paths[0]) as src:
+            out_meta = src.meta.copy()
+            with rasterio.open(output_path, "w", **out_meta) as dest:
+                dest.write(src.read())
+    else:
+        # The last temp file is our final result
+        if os.path.exists(output_path):
+            os.remove(output_path)
+        os.rename(current_mosaic_path, output_path)
+        temp_files.remove(current_mosaic_path)
+
+    # Cleanup temporary merge files
+    for f in temp_files:
+        if os.path.exists(f):
+            os.remove(f)
     
     print(f"Merged rasters saved to {output_path}")
 
