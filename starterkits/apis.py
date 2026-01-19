@@ -116,12 +116,14 @@ def get_solar_data(country):
     unzip_file(f'Data/{country}/Solar irradiation/{country}_solar_irradiance.zip', f'Data/{country}/Solar irradiation')
   
 @handle_exceptions
-def get_dem_data(country, api_key='demoapikeyot2022'):
+def get_dem_data(country, api_key='demoapikeyot2022', dem_type='SRTMGL3'):
     """
     Download Digital Elevation Model (DEM) data for a country.
 
     Args:
         country (str): ISO3 country code.
+        api_key (str): API key for OpenTopography.
+        dem_type (str): Type of DEM to download, choose from: SRTMGL3, SRTMGL1, SRTMGL1_E, AW3D30, AW3D30_E, SRTM15Plus, NASADEM, COP30, COP90, EU_DTM, GEDI_L3, GEBCOIceTopo, GEBCOSubIceTopo, CA_MRDEM_DSM, CA_MRDEM_DTM
     """
     os.makedirs(f'Data/{country}/Elevation', exist_ok=True)
     boundaries = pygadm.Items(admin=country, content_level=0)
@@ -154,7 +156,7 @@ def get_dem_data(country, api_key='demoapikeyot2022'):
                 p_north = north
                 
             p_path = f'Data/{country}/Elevation/{country}_dem_part{i+1}.tif'
-            p_url = f'https://portal.opentopography.org/API/globaldem?demtype=NASADEM&south={p_south}&north={p_north}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}'
+            p_url = f'https://portal.opentopography.org/API/globaldem?demtype={dem_type}&south={p_south}&north={p_north}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}'
             
             download_file(p_url, p_path, f'Elevation Part {i+1}')
             part_paths.append(p_path)
