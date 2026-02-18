@@ -243,7 +243,7 @@ def get_landcover_data(country, year=2022, username=None, password=None):
         earthaccess.login()
     else:
         print('No username or password provided for Nasa Earthaccess, the landcover data will be skiped.')
-        pass
+        return 
         
     os.makedirs(f'Data/{country}/Land cover', exist_ok=True)
     
