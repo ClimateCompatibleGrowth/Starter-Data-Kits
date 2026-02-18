@@ -13,6 +13,7 @@ setup(
         'osmnx',
         'boto3',
         'requests',
+        'earthaccess',
     ],
     python_requires='>=3.6',
 )

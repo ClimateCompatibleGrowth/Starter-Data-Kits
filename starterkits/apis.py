@@ -5,6 +5,7 @@ import osmnx as ox
 import time
 import requests
 import math
+import earthaccess
 from .utils import handle_exceptions, mask_raster_with_geometry, unzip_file, merge_rasters
 
 
@@ -217,3 +218,43 @@ def get_roads(country): #, road_types):
     #     log(f"Saved file to: {out_path}", country_start)
     # else:
     #     log("No roads found with the selected filters. Nothing saved.", country_start)
+
+
+@handle_exceptions
+def get_landcover_data(country, year=2022, username=None, password=None):
+    """
+    Download MODIS Land Cover Type 1 (MCD12Q1) data for a country.
+    
+    Args:
+        country (str): ISO3 country code.
+        year (int): Year of data to download.
+        username (str): Earthdata username.
+        password (str): Earthdata password.
+    """
+    print(f"Getting land cover data for {country}")
+    # Authenticate
+    if username and password:
+        earthaccess.login(username=username, password=password)
+    else:
+        earthaccess.login(strategy="interactive")
+        
+    os.makedirs(f'Data/{country}/Land cover', exist_ok=True)
+    
+    boundaries = pygadm.Items(admin=country, content_level=0)
+    boundaries.crs = 4326
+    
+    # Get bounding box
+    bbox = tuple(boundaries.total_bounds)
+    
+    results = earthaccess.search_data(
+        short_name='MCD12Q1',
+        bounding_box=bbox,
+        temporal=(f"{year}-01-01", f"{year}-12-31")
+    )
+    
+    if not results:
+        print(f"No MODIS data found for {country} in {year}")
+        return
+
+    earthaccess.download(results, f'Data/{country}/Land cover')
+    print(f"Downloaded MODIS land cover data to Data/{country}/Land cover")
