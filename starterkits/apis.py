@@ -234,9 +234,15 @@ def get_landcover_data(country, year=2022, username=None, password=None):
     print(f"Getting land cover data for {country}")
     # Authenticate
     if username and password:
-        earthaccess.login(username=username, password=password)
+        # Create the .netrc file that earthaccess/GDAL/curl look for
+        netrc_content = f"machine urs.earthdata.nasa.gov login {username} password {password}\n"
+        with open(Path.home() / ".netrc", "w") as f:
+            f.write(netrc_content)
+        os.chmod(Path.home() / ".netrc", 0o600) # Set proper permissions
+        earthaccess.login()
     else:
-        earthaccess.login(strategy="interactive")
+        print('No username or password provided for Nasa Earthaccess, the landcover data will be skiped.')
+        pass
         
     os.makedirs(f'Data/{country}/Land cover', exist_ok=True)
     
