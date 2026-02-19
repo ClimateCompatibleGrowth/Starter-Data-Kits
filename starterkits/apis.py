@@ -195,6 +195,7 @@ def get_dem_data(country, database='Nasa Earth', nasa_username=None, nasa_passwo
     os.makedirs(f'Data/{country}/Elevation', exist_ok=True)
     boundaries = pygadm.Items(admin=country, content_level=0)
     boundaries.crs = 4326
+    output_path = f'Data/{country}/Elevation/{dem_type}/{country}_dem.tif'
 
     if database.lower().replace(' ', '') == 'OpenTopography':
         west, south, east, north = boundaries.total_bounds
@@ -207,7 +208,6 @@ def get_dem_data(country, database='Nasa Earth', nasa_username=None, nasa_passwo
         width_km = width_deg * 111 * math.cos(math.radians(avg_lat))
         area_km2 = height_km * width_km
         
-        output_path = f'Data/{country}/Elevation/{dem_type}/{country}_dem.tif'
         limit_km2 = 450000
         
         if area_km2 > limit_km2:
