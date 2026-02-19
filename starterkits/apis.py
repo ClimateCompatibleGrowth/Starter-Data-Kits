@@ -179,7 +179,8 @@ def get_dem_data(country, database='Nasa Earth', username=None, password=None,
         # Autenthicate
         auth = authenticate_nasa_earth(username=username, password=password)
         if not auth:
-            return "Elevation data skiped due to Nasa Earth authentication missing"
+            print("Elevation data skiped due to Nasa Earth authentication missing")
+            return 
         # Get bounding box
         bbox = tuple(boundaries.total_bounds)
         
@@ -195,6 +196,8 @@ def get_dem_data(country, database='Nasa Earth', username=None, password=None,
 
         earthaccess.download(results, f'Data/{country}/Elevation')
         print(f"Downloaded Elevation data to Data/{country}/Elevation")
+    else:
+        print('Invalid database name')
 
 @handle_exceptions
 def get_ntl_data(country):
@@ -265,8 +268,8 @@ def get_landcover_data(country, year=2022, username=None, password=None):
     # Autenthicate
     auth = authenticate_nasa_earth(username=username, password=password)
     if not auth:
-        return "Land cover data skiped due to Nasa Earth authentication missing"
-    
+        print("Land cover data skiped due to Nasa Earth authentication missing")
+        return 
     # Get bounding box
     bbox = tuple(boundaries.total_bounds)
     
