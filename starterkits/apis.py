@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 import pycountry
 import pygadm
 import osmnx as ox
@@ -118,13 +117,14 @@ def get_solar_data(country):
     unzip_file(f'Data/{country}/Solar irradiation/{country}_solar_irradiance.zip', f'Data/{country}/Solar irradiation')
   
 @handle_exceptions
-def get_dem_data(country, database='Nasa Earth', username=None, password=None, 
-                 api_key='demoapikeyot2022', dem_type='SRTMGL3', year=2022):
+def get_dem_data(country, database='Nasa Earth', nasa_username=None, nasa_password=None, 
+                 topo_api_key='demoapikeyot2022', dem_type='SRTMGL3', year=2022):
     """
     Download Digital Elevation Model (DEM) data for a country.
 
     Args:
         country (str): ISO3 country code.
+        database (str): Name of the database, currently 'Nasa Earth' or 'OpenTopography'
         api_key (str): API key for OpenTopography.
         dem_type (str): Type of DEM to download, choose from: SRTMGL3, SRTMGL1, SRTMGL1_E, AW3D30, AW3D30_E, SRTM15Plus, NASADEM, COP30, COP90, EU_DTM, GEDI_L3, GEBCOIceTopo, GEBCOSubIceTopo, CA_MRDEM_DSM, CA_MRDEM_DTM
     """
@@ -161,7 +161,7 @@ def get_dem_data(country, database='Nasa Earth', username=None, password=None,
                     p_north = north
                     
                 p_path = f'Data/{country}/Elevation/{country}_dem_part{i+1}.tif'
-                p_url = f'https://portal.opentopography.org/API/globaldem?demtype={dem_type}&south={p_south}&north={p_north}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}'
+                p_url = f'https://portal.opentopography.org/API/globaldem?demtype={dem_type}&south={p_south}&north={p_north}&west={west}&east={east}&outputFormat=GTiff&API_Key={topo_api_key}'
                 
                 download_file(p_url, p_path, f'Elevation Part {i+1}')
                 part_paths.append(p_path)
@@ -173,11 +173,11 @@ def get_dem_data(country, database='Nasa Earth', username=None, password=None,
                 if os.path.exists(p):
                     os.remove(p)
         else:
-            url = f'https://portal.opentopography.org/API/globaldem?demtype=NASADEM&south={south}&north={north}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}'
+            url = f'https://portal.opentopography.org/API/globaldem?demtype=NASADEM&south={south}&north={north}&west={west}&east={east}&outputFormat=GTiff&API_Key={topo_api_key}'
             download_file(url, output_path, 'Elevation')
     elif database.lower().replace(' ', '') == 'nasaearth':
         # Autenthicate
-        auth = authenticate_nasa_earth(username=username, password=password)
+        auth = authenticate_nasa_earth(username=nasa_username, password=nasa_password)
         if not auth:
             print("Elevation data skiped due to Nasa Earth authentication missing")
             return 
