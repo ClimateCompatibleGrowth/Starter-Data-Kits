@@ -7,7 +7,7 @@ import time
 import requests
 import math
 import earthaccess
-from .utils import handle_exceptions, mask_raster_with_geometry, unzip_file, merge_rasters
+from .utils import handle_exceptions, mask_raster_with_geometry, unzip_file, merge_rasters, authenticate_nasa_earth
 
 
 def download_file(url, path, name):
@@ -118,7 +118,8 @@ def get_solar_data(country):
     unzip_file(f'Data/{country}/Solar irradiation/{country}_solar_irradiance.zip', f'Data/{country}/Solar irradiation')
   
 @handle_exceptions
-def get_dem_data(country, api_key='demoapikeyot2022', dem_type='SRTMGL3'):
+def get_dem_data(country, database='Nasa Earth', username=None, password=None, 
+                 api_key='demoapikeyot2022', dem_type='SRTMGL3', year=2022):
     """
     Download Digital Elevation Model (DEM) data for a country.
 
@@ -130,48 +131,70 @@ def get_dem_data(country, api_key='demoapikeyot2022', dem_type='SRTMGL3'):
     os.makedirs(f'Data/{country}/Elevation', exist_ok=True)
     boundaries = pygadm.Items(admin=country, content_level=0)
     boundaries.crs = 4326
-    west, south, east, north = boundaries.total_bounds
-    
-    # Estimate area of the bounding box in km2
-    avg_lat = (south + north) / 2
-    height_deg = north - south
-    width_deg = east - west
-    height_km = height_deg * 111
-    width_km = width_deg * 111 * math.cos(math.radians(avg_lat))
-    area_km2 = height_km * width_km
-    
-    output_path = f'Data/{country}/Elevation/{country}_dem.tif'
-    limit_km2 = 450000
-    
-    if area_km2 > limit_km2:
-        num_parts = math.ceil(area_km2 / limit_km2)
-        print(f"Area is large ({area_km2:.0f} km2), splitting into {num_parts} regions.")
+
+    if database.lower().replace(' ', '') == 'OpenTopography':
+        west, south, east, north = boundaries.total_bounds
         
-        lat_step = height_deg / num_parts
-        part_paths = []
+        # Estimate area of the bounding box in km2
+        avg_lat = (south + north) / 2
+        height_deg = north - south
+        width_deg = east - west
+        height_km = height_deg * 111
+        width_km = width_deg * 111 * math.cos(math.radians(avg_lat))
+        area_km2 = height_km * width_km
         
-        for i in range(num_parts):
-            p_south = south + i * lat_step
-            p_north = south + (i + 1) * lat_step
-            # Handle potential floating point issues on the last part
-            if i == num_parts - 1:
-                p_north = north
-                
-            p_path = f'Data/{country}/Elevation/{country}_dem_part{i+1}.tif'
-            p_url = f'https://portal.opentopography.org/API/globaldem?demtype={dem_type}&south={p_south}&north={p_north}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}'
+        output_path = f'Data/{country}/Elevation/{country}_dem.tif'
+        limit_km2 = 450000
+        
+        if area_km2 > limit_km2:
+            num_parts = math.ceil(area_km2 / limit_km2)
+            print(f"Area is large ({area_km2:.0f} km2), splitting into {num_parts} regions.")
             
-            download_file(p_url, p_path, f'Elevation Part {i+1}')
-            part_paths.append(p_path)
+            lat_step = height_deg / num_parts
+            part_paths = []
+            
+            for i in range(num_parts):
+                p_south = south + i * lat_step
+                p_north = south + (i + 1) * lat_step
+                # Handle potential floating point issues on the last part
+                if i == num_parts - 1:
+                    p_north = north
+                    
+                p_path = f'Data/{country}/Elevation/{country}_dem_part{i+1}.tif'
+                p_url = f'https://portal.opentopography.org/API/globaldem?demtype={dem_type}&south={p_south}&north={p_north}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}'
+                
+                download_file(p_url, p_path, f'Elevation Part {i+1}')
+                part_paths.append(p_path)
+            
+            merge_rasters(part_paths, output_path)
+            
+            # Cleanup
+            for p in part_paths:
+                if os.path.exists(p):
+                    os.remove(p)
+        else:
+            url = f'https://portal.opentopography.org/API/globaldem?demtype=NASADEM&south={south}&north={north}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}'
+            download_file(url, output_path, 'Elevation')
+    elif database.lower().replace(' ', '') == 'nasaearth':
+        # Autenthicate
+        auth = authenticate_nasa_earth(username=username, password=password)
+        if not auth:
+            return "Elevation data skiped due to Nasa Earth authentication missing"
+        # Get bounding box
+        bbox = tuple(boundaries.total_bounds)
         
-        merge_rasters(part_paths, output_path)
+        results = earthaccess.search_data(
+            short_name=dem_type,
+            bounding_box=bbox,
+            temporal=(f"{year}-01-01", f"{year}-12-31")
+        )
         
-        # Cleanup
-        for p in part_paths:
-            if os.path.exists(p):
-                os.remove(p)
-    else:
-        url = f'https://portal.opentopography.org/API/globaldem?demtype=NASADEM&south={south}&north={north}&west={west}&east={east}&outputFormat=GTiff&API_Key={api_key}'
-        download_file(url, output_path, 'Elevation')
+        if not results:
+            print(f"No {dem_type} data found for {country} in {year}")
+            return
+
+        earthaccess.download(results, f'Data/{country}/Elevation')
+        print(f"Downloaded Elevation data to Data/{country}/Elevation")
 
 @handle_exceptions
 def get_ntl_data(country):
@@ -233,22 +256,16 @@ def get_landcover_data(country, year=2022, username=None, password=None):
         password (str): Earthdata password.
     """
     print(f"Getting land cover data for {country}")
-    # Authenticate
-    if username and password:
-        # Create the .netrc file that earthaccess/GDAL/curl look for
-        netrc_content = f"machine urs.earthdata.nasa.gov login {username} password {password}\n"
-        with open(Path.home() / ".netrc", "w") as f:
-            f.write(netrc_content)
-        os.chmod(Path.home() / ".netrc", 0o600) # Set proper permissions
-        earthaccess.login()
-    else:
-        print('No username or password provided for Nasa Earthaccess, the landcover data will be skiped.')
-        return 
         
     os.makedirs(f'Data/{country}/Land cover', exist_ok=True)
     
     boundaries = pygadm.Items(admin=country, content_level=0)
     boundaries.crs = 4326
+    
+    # Autenthicate
+    auth = authenticate_nasa_earth(username=username, password=password)
+    if not auth:
+        return "Land cover data skiped due to Nasa Earth authentication missing"
     
     # Get bounding box
     bbox = tuple(boundaries.total_bounds)
