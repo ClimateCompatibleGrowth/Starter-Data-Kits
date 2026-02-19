@@ -206,7 +206,7 @@ def get_dem_data(country, database='Nasa Earth', nasa_username=None, nasa_passwo
         width_km = width_deg * 111 * math.cos(math.radians(avg_lat))
         area_km2 = height_km * width_km
         
-        output_path = f'Data/{country}/Elevation/{country}_dem.tif'
+        output_path = f'Data/{country}/Elevation/{dem_type)/{country}_dem.tif'
         limit_km2 = 450000
         
         if area_km2 > limit_km2:
@@ -223,7 +223,7 @@ def get_dem_data(country, database='Nasa Earth', nasa_username=None, nasa_passwo
                 if i == num_parts - 1:
                     p_north = north
                     
-                p_path = f'Data/{country}/Elevation/{country}_dem_part{i+1}.tif'
+                p_path = f'Data/{country}/Elevation/{dem_type}/{country}_dem_part{i+1}.tif'
                 p_url = f'https://portal.opentopography.org/API/globaldem?demtype={dem_type}&south={p_south}&north={p_north}&west={west}&east={east}&outputFormat=GTiff&API_Key={topo_api_key}'
                 
                 download_file(p_url, p_path, f'Elevation Part {i+1}')
@@ -252,8 +252,20 @@ def get_dem_data(country, database='Nasa Earth', nasa_username=None, nasa_passwo
             bounding_box=bbox,
         )
 
-        earthaccess.download(results, f'Data/{country}/Elevation')
-        print(f"Downloaded Elevation data to Data/{country}/Elevation")
+        earthaccess.download(results, f'Data/{country}/Elevation/{dem_type}')
+
+        part_paths = glob.glob(f'Data/{country}/Elevation/{dem_type}/*')
+        merge_rasters(part_paths, output_path)
+            
+        # Cleanup
+        for p in part_paths:
+            if os.path.exists(p):
+                os.remove(p)
+
+        mask_raster_with_geometry(output_path, f'Data/{country}/Boundaries/{country}_adm_0.gpkg', output_path)
+
+
+        print(f"Downloaded Elevation data to Data/{country}/Elevation/{dem_type}")
     else:
         print('Invalid database name')
 
@@ -342,4 +354,15 @@ def get_landcover_data(country, year=2022, username=None, password=None):
         return
 
     earthaccess.download(results, f'Data/{country}/Land cover')
+
+    part_paths = glob.glob(f'Data/{country}/Land cover/*')
+    merge_rasters(part_paths, f'Data/{country}/Land cover/{country}_landcover.tif')
+            
+    # Cleanup
+    for p in part_paths:
+        if os.path.exists(p):
+            os.remove(p)
+
+    mask_raster_with_geometry(f'Data/{country}/Land cover/{country}_landcover.tif', f'Data/{country}/Boundaries/{country}_adm_0.gpkg', f'Data/{country}/Land cover/{country}_landcover.tif')
+
     print(f"Downloaded MODIS land cover data to Data/{country}/Land cover")
