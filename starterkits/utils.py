@@ -1,5 +1,6 @@
 import functools
 import os
+from pathlib import Path
 import rasterio
 import rasterio.mask
 from rasterio.merge import merge
