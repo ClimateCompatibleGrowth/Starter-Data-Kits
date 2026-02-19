@@ -360,9 +360,9 @@ def get_landcover_data(country, year=2022, username=None, password=None):
     merge_rasters(part_paths, f'Data/{country}/Land cover/{country}_landcover.tif')
             
     # Cleanup
-    for p in part_paths:
-        if os.path.exists(p):
-            os.remove(p)
+    # for p in part_paths:
+    #     if os.path.exists(p):
+    #         os.remove(p)
 
     mask_raster_with_geometry(f'Data/{country}/Land cover/{country}_landcover.tif', f'Data/{country}/Boundaries/{country}_adm_0.gpkg', f'Data/{country}/Land cover/{country}_landcover.tif')
 
