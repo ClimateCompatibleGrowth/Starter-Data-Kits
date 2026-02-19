@@ -6,6 +6,7 @@ from rasterio.merge import merge
 import zipfile
 import geopandas as gpd
 from osgeo import gdal
+import earthaccess
 
 def authenticate_nasa_earth(username=None, password=None):
     # Authenticate
