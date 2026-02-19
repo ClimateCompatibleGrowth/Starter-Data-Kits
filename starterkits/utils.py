@@ -20,7 +20,7 @@ def authenticate_nasa_earth(username=None, password=None):
         try:
             earthaccess.login(persistent=True)
             return True
-        except ex:
+        except:
            print('No username or password provided for Nasa Earthaccess, the landcover and elevation data will be skiped.')
            return False
 
