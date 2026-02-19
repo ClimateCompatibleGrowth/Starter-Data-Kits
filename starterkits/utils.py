@@ -18,7 +18,7 @@ def authenticate_nasa_earth(username=None, password=None):
             f.write(netrc_content)
         os.chmod(Path.home() / ".netrc", 0o600) # Set proper permissions
         try:
-            earthaccess.login(persistent=True)
+            earthaccess.login(persist=True)
             return True
         except:
            print('No username or password provided for Nasa Earthaccess, the landcover and elevation data will be skiped.')
