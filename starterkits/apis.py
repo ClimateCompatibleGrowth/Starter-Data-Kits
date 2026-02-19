@@ -206,7 +206,7 @@ def get_dem_data(country, database='Nasa Earth', nasa_username=None, nasa_passwo
         width_km = width_deg * 111 * math.cos(math.radians(avg_lat))
         area_km2 = height_km * width_km
         
-        output_path = f'Data/{country}/Elevation/{dem_type)/{country}_dem.tif'
+        output_path = f'Data/{country}/Elevation/{dem_type}/{country}_dem.tif'
         limit_km2 = 450000
         
         if area_km2 > limit_km2:
