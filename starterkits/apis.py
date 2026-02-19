@@ -8,6 +8,69 @@ import math
 import earthaccess
 from .utils import handle_exceptions, mask_raster_with_geometry, unzip_file, merge_rasters, authenticate_nasa_earth
 
+elevation_datasets = {
+    'NASA': {
+        "NASADEM_HGT": {
+            "full_name": "NASADEM Merged DEM",
+            "resolution": "1\" (~30m)",
+            "vertical_accuracy": "~6-10m",
+            "best_for": "General Use. The most updated and 'cleanest' version of the global radar-based DEM."
+        },
+        "COP_DEM_GLO_30": {
+            "full_name": "Copernicus DEM GLO-30",
+            "resolution": "1\" (~30m)",
+            "vertical_accuracy": "< 4m",
+            "best_for": "Hydrology. Highly modern and consistent; considered the highest quality for 30m applications."
+        },
+        "SRTMGL1": {
+            "full_name": "SRTM Global v3",
+            "resolution": "1\" (~30m)",
+            "vertical_accuracy": "~16m",
+            "best_for": "Legacy studies. The original standard; mostly replaced by NASADEM but still widely used."
+        },
+        "ASTGTM": {
+            "full_name": "ASTER Global DEM",
+            "resolution": "1\" (~30m)",
+            "vertical_accuracy": "~10-25m",
+            "best_for": "High Latitudes. Covers areas up to 83°N/S, far beyond the reach of SRTM/NASADEM."
+        },
+        "COP_DEM_GLO_90": {
+            "full_name": "Copernicus DEM GLO-90",
+            "resolution": "3\" (~90m)",
+            "vertical_accuracy": "< 4m",
+            "best_for": "Regional analysis. Higher vertical accuracy than SRTM 90m with reduced file sizes."
+        },
+        "SRTMGL3": {
+            "full_name": "SRTM Global 3-arc",
+            "resolution": "3\" (~90m)",
+            "vertical_accuracy": "~16m",
+            "best_for": "Smooth terrain. Faster processing for large watersheds where 30m is overkill."
+        },
+        "gmted2010": {
+            "full_name": "GMTED2010",
+            "resolution": "250m - 1km",
+            "vertical_accuracy": "Varies",
+            "best_for": "Continental/Global modeling. Ideal for climate models or small-scale map backgrounds."
+        },
+        "ATL08": {
+            "full_name": "ICESat-2 (Lidar)",
+            "resolution": "Point-based",
+            "vertical_accuracy": "~0.2m",
+            "best_for": "Ground Truth. Laser points used to verify the accuracy of the raster DEMs above."
+        }
+    },
+    'OpenTopography': {
+        'NASADEM': {
+            'resolution': '~30m',
+            'best_for': 'Consistent global coverage (shuttle-based)',
+        },
+        'SRTMGL3': {
+            'resolution': '~90m',
+            'best_for': 'Smooth terrain. Faster processing for large watersheds where 30m is overkill',
+        },
+    }
+}
+
 
 def download_file(url, path, name):
     """
@@ -118,7 +181,7 @@ def get_solar_data(country):
   
 @handle_exceptions
 def get_dem_data(country, database='Nasa Earth', nasa_username=None, nasa_password=None, 
-                 topo_api_key='demoapikeyot2022', dem_type='SRTMGL3', year=2022):
+                 topo_api_key='demoapikeyot2022', dem_type='SRTMGL3'):
     """
     Download Digital Elevation Model (DEM) data for a country.
 
@@ -187,12 +250,7 @@ def get_dem_data(country, database='Nasa Earth', nasa_username=None, nasa_passwo
         results = earthaccess.search_data(
             short_name=dem_type,
             bounding_box=bbox,
-            temporal=(f"{year}-01-01", f"{year}-12-31")
         )
-        
-        if not results:
-            print(f"No {dem_type} data found for {country} in {year}")
-            return
 
         earthaccess.download(results, f'Data/{country}/Elevation')
         print(f"Downloaded Elevation data to Data/{country}/Elevation")
