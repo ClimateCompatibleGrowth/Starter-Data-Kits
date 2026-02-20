@@ -52,6 +52,8 @@ def mask_raster_with_geometry(raster_path, shapes, output_path):
         shapes = gpd.read_file(shapes)
         shapes = shapes.geometry.values
     elif isinstance(shapes, gpd.GeoDataFrame):
+        with rasterio.open(raster_path) as src:
+            shapes = shapes.to_crs(src.meta['crs'])
         shapes = shapes.geometry.values
     elif isinstance(shapes, list):
         pass
@@ -71,6 +73,8 @@ def mask_raster_with_geometry(raster_path, shapes, output_path):
 
     with rasterio.open(output_path, "w", **out_meta) as dest:
         dest.write(out_image)
+
+    os.system(f"gdalwarp -t_srs EPSG:4326 {output_path} {output_path}")
     
     print(f"Masked raster saved to {output_path}")
 

@@ -319,7 +319,7 @@ def get_roads(country): #, road_types):
 
 
 @handle_exceptions
-def get_landcover_data(country, username=None, password=None):
+def get_landcover_data(country, username=None, password=None, year=2022):
     """
     Download MODIS Land Cover Type 1 (MCD12Q1) data for a country.
     
@@ -347,6 +347,7 @@ def get_landcover_data(country, username=None, password=None):
     results = earthaccess.search_data(
         short_name='MCD12Q1',
         bounding_box=bbox,
+        temporal=(f"{year}-01-01", f"{year}-01-02")
     )
     
     if not results:
@@ -362,6 +363,6 @@ def get_landcover_data(country, username=None, password=None):
         if os.path.exists(p):
             os.remove(p)
 
-    #mask_raster_with_geometry(f'Data/{country}/Land cover/{country}_landcover.tif', f'Data/{country}/Boundaries/{country}_adm_0.gpkg', f'Data/{country}/Land cover/{country}_landcover.tif')
+    mask_raster_with_geometry(f'Data/{country}/Land cover/{country}_landcover.tif', f'Data/{country}/Boundaries/{country}_adm_0.gpkg', f'Data/{country}/Land cover/{country}_landcover.tif')
 
     print(f"Downloaded MODIS land cover data to Data/{country}/Land cover")
