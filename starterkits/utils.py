@@ -91,7 +91,14 @@ def merge_rasters(raster_paths, output_path, method='gdal'):
         vrt = gdal.BuildVRT('', raster_paths)
         gdal.Translate(output_path, vrt)
         vrt = None
-        os.system(f"gdalwarp -t_srs EPSG:4326 {output_path} {output_path}")
+        warp_options = gdal.WarpOptions(
+                        format="GTiff",
+                        dstSRS="EPSG:4326",
+                        resampleAlg="near", # Use 'near' for categorical data like land cover
+                        creationOptions=["COMPRESS=LZW", "TILED=YES"]
+                    )
+        
+        gdal.Warp(output_path, output_path, options=warp_options)
     elif method == 'rasterio':
         print(f"Merging {len(raster_paths)} rasters into {output_path} using Rasterio (Sequential mode)")
         
