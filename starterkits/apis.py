@@ -355,12 +355,37 @@ def get_landcover_data(country, username=None, password=None, year=2022):
 
     downloaded_paths = earthaccess.download(results, f'Data/{country}/Land cover')
 
-    part_paths = [str(p) for p in downloaded_paths]
-    merge_rasters(part_paths, f'Data/{country}/Land cover/{country}_landcover.tif')
+    # MODIS HDF files contain multiple layers. We need the IGBP layer (usually index 0).
+    subdataset_paths = []
+    for path in downloaded_paths:
+        ds = gdal.Open(str(path))
+        # Get the first subdataset (LC_Type1)
+        subdataset_paths.append(ds.GetSubDatasets()[0][0])
+        ds = None 
+
+    # 3. Build a Virtual Mosaic (VRT)
+    # This creates a "pointer" file, avoiding the "empty raster" issue
+    vrt_options = gdal.BuildVRTOptions(resampleAlg='near', addAlpha=True)
+    gdal.BuildVRT("temporary_mosaic.vrt", subdataset_paths, options=vrt_options)
+
+    # 4. Warp to WGS84 (EPSG:4326)
+    # This handles the Sinusoidal to Geographic conversion
+    warp_options = gdal.WarpOptions(
+        format="GTiff",
+        dstSRS="EPSG:4326",
+        resampleAlg="near", # Use 'near' for categorical data like land cover
+        creationOptions=["COMPRESS=LZW", "TILED=YES"]
+    )
+
+    gdal.Warp(f'Data/{country}/Land cover/{country}_landcover.tif', "temporary_mosaic.vrt", options=warp_options)
+
+    # Cleanup
+    if os.path.exists("temporary_mosaic.vrt"):
+        os.remove("temporary_mosaic.vrt")
             
-    for p in part_paths:
-        if os.path.exists(p):
-            os.remove(p)
+    for p in downloaded_paths:
+        if os.path.exists(str(p)):
+            os.remove(str(p))
 
     mask_raster_with_geometry(f'Data/{country}/Land cover/{country}_landcover.tif', f'Data/{country}/Boundaries/{country}_adm_0.gpkg', f'Data/{country}/Land cover/{country}_landcover.tif')
 
