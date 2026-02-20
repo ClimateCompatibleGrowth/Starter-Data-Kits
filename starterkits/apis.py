@@ -1,8 +1,7 @@
 import os
-import glob
 import pycountry
 import pygadm
-import osmnx as ox
+# import osmnx as ox
 import time
 import requests
 import math

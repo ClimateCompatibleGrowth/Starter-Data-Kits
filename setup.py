@@ -10,8 +10,8 @@ setup(
     install_requires=[
         'pycountry',
         'pygadm',
-        'osmnx',
-        'boto3',
+        # 'osmnx',
+        # 'boto3',
         'requests',
         'earthaccess',
     ],
