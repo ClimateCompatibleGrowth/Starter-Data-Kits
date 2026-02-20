@@ -362,6 +362,6 @@ def get_landcover_data(country, username=None, password=None):
         if os.path.exists(p):
             os.remove(p)
 
-    mask_raster_with_geometry(f'Data/{country}/Land cover/{country}_landcover.tif', f'Data/{country}/Boundaries/{country}_adm_0.gpkg', f'Data/{country}/Land cover/{country}_landcover.tif')
+    #mask_raster_with_geometry(f'Data/{country}/Land cover/{country}_landcover.tif', f'Data/{country}/Boundaries/{country}_adm_0.gpkg', f'Data/{country}/Land cover/{country}_landcover.tif')
 
     print(f"Downloaded MODIS land cover data to Data/{country}/Land cover")
