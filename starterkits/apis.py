@@ -366,7 +366,7 @@ def get_landcover_data(country, username=None, password=None, year=2022):
 
     # 3. Build a Virtual Mosaic (VRT)
     # This creates a "pointer" file, avoiding the "empty raster" issue
-    vrt_options = gdal.BuildVRTOptions(resampleAlg='near', addAlpha=True)
+    vrt_options = gdal.BuildVRTOptions(resampleAlg='near')
     gdal.BuildVRT("temporary_mosaic.vrt", subdataset_paths, options=vrt_options)
 
     # 4. Warp to WGS84 (EPSG:4326)
@@ -375,6 +375,7 @@ def get_landcover_data(country, username=None, password=None, year=2022):
         format="GTiff",
         dstSRS="EPSG:4326",
         resampleAlg="near", # Use 'near' for categorical data like land cover
+        dstNodata=255,
         creationOptions=["COMPRESS=LZW", "TILED=YES"]
     )
 
