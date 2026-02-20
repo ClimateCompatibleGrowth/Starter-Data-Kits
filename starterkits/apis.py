@@ -253,9 +253,9 @@ def get_dem_data(country, database='Nasa Earth', nasa_username=None, nasa_passwo
             bounding_box=bbox,
         )
 
-        earthaccess.download(results, f'Data/{country}/Elevation/{dem_type}')
+        downloaded_paths = earthaccess.download(results, f'Data/{country}/Elevation/{dem_type}')
 
-        part_paths = glob.glob(f'Data/{country}/Elevation/{dem_type}/*')
+        part_paths = [str(p) for p in downloaded_paths]
         merge_rasters(part_paths, output_path)
             
         # Cleanup
@@ -319,7 +319,7 @@ def get_roads(country): #, road_types):
 
 
 @handle_exceptions
-def get_landcover_data(country, year=2022, username=None, password=None):
+def get_landcover_data(country, username=None, password=None):
     """
     Download MODIS Land Cover Type 1 (MCD12Q1) data for a country.
     
@@ -347,22 +347,20 @@ def get_landcover_data(country, year=2022, username=None, password=None):
     results = earthaccess.search_data(
         short_name='MCD12Q1',
         bounding_box=bbox,
-        temporal=(f"{year}-01-01", f"{year}-12-31")
     )
     
     if not results:
-        print(f"No MODIS data found for {country} in {year}")
+        print(f"No MODIS data found for {country}")
         return
 
-    earthaccess.download(results, f'Data/{country}/Land cover')
+    downloaded_paths = earthaccess.download(results, f'Data/{country}/Land cover')
 
-    part_paths = glob.glob(f'Data/{country}/Land cover/*')
+    part_paths = [str(p) for p in downloaded_paths]
     merge_rasters(part_paths, f'Data/{country}/Land cover/{country}_landcover.tif')
             
-    # Cleanup
-    # for p in part_paths:
-    #     if os.path.exists(p):
-    #         os.remove(p)
+    for p in part_paths:
+        if os.path.exists(p):
+            os.remove(p)
 
     mask_raster_with_geometry(f'Data/{country}/Land cover/{country}_landcover.tif', f'Data/{country}/Boundaries/{country}_adm_0.gpkg', f'Data/{country}/Land cover/{country}_landcover.tif')
 
