@@ -6,6 +6,7 @@ import time
 import requests
 import math
 import earthaccess
+from osgeo import gdal
 from .utils import handle_exceptions, mask_raster_with_geometry, unzip_file, merge_rasters, authenticate_nasa_earth
 
 elevation_datasets = {
