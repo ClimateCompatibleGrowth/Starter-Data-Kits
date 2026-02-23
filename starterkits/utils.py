@@ -59,8 +59,18 @@ def mask_raster_with_geometry(raster_path, shapes, output_path):
         raise ValueError("shapes must be a GeoDataFrame or a path to a GeoDataFrame")
 
     with rasterio.open(raster_path) as src:
+        if src.crs != shapes.crs:
+            warp_options = gdal.WarpOptions(
+                        format="GTiff",
+                        dstSRS="EPSG:4326",
+                        resampleAlg="near", # Use 'near' for categorical data like land cover
+                        creationOptions=["COMPRESS=LZW", "TILED=YES"]
+                    )
+        
+            gdal.Warp(raster_path, raster_path, options=warp_options)
         out_image, out_transform = rasterio.mask.mask(src, shapes, crop=True)
         out_meta = src.meta.copy()
+
 
     out_meta.update({
         "driver": "GTiff",
