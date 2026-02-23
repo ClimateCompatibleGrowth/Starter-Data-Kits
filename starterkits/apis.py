@@ -392,3 +392,34 @@ def get_landcover_data(country, username=None, password=None, year=2022):
     mask_raster_with_geometry(f'Data/{country}/Land cover/{country}_landcover.tif', f'Data/{country}/Boundaries/{country}_adm_0.gpkg', f'Data/{country}/Land cover/{country}_landcover.tif')
 
     print(f"Downloaded MODIS land cover data to Data/{country}/Land cover")
+
+
+@handle_exceptions
+def get_traveltime_data(country):
+    """
+    Download travel time to the nearest city (accessibility) data for a country from UNDP GeoHub.
+
+    The dataset quantifies the time it takes to travel to the nearest urban center via surface
+    transport as of 2015, based on roads, railways, rivers, water bodies, and land cover, produced
+    by the Malarian Atlas project.
+
+    Args:
+        country (str): ISO3 country code.
+    """
+    print(f"Getting traveltime data for {country}")
+        
+    os.makedirs(f'Data/{country}/Traveltime', exist_ok=True)
+    
+    boundaries = pygadm.Items(admin=country, content_level=0)
+    boundaries.crs = 4326
+
+    response = requests.get('https://geohub.data.undp.org/api/datasets/a71bc2b662d1af0f0513d634968b4c36')
+    data_dict = response.json() 
+    
+    download_file(data_dict['properties']['url'], 
+                  f'Data/{country}/Traveltime/{country}_traveltime.tif', 
+                  'Traveltime')
+
+    mask_raster_with_geometry(f'Data/{country}/Traveltime/{country}_traveltime.tif', 
+                              boundaries, 
+                              f'Data/{country}/Traveltime/{country}_traveltime.tif')
