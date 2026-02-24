@@ -38,6 +38,16 @@ def handle_exceptions(func):
             return None
     return wrapper
 
+def reproject_raster(raster_path, output_path):
+    warp_options = gdal.WarpOptions(
+                        format="GTiff",
+                        dstSRS="EPSG:4326",
+                        resampleAlg="near", # Use 'near' for categorical data like land cover
+                        creationOptions=["COMPRESS=LZW", "TILED=YES"]
+                    )
+    
+    gdal.Warp(output_path, raster_path, options=warp_options)
+
 def mask_raster_with_geometry(raster_path, shapes, output_path):
     """
     Mask a raster using a list of geometries or a GeoDataFrame.
@@ -48,6 +58,7 @@ def mask_raster_with_geometry(raster_path, shapes, output_path):
                                        The geometries must be in the same CRS as the raster.
         output_path (str): Path to save the masked raster.
     """
+    reproject = False
     if isinstance(shapes, str):
         shapes = gpd.read_file(shapes)
         shapes = shapes.geometry.values
@@ -60,14 +71,9 @@ def mask_raster_with_geometry(raster_path, shapes, output_path):
 
     with rasterio.open(raster_path) as src:
         if src.crs != shapes.crs:
-            warp_options = gdal.WarpOptions(
-                        format="GTiff",
-                        dstSRS="EPSG:4326",
-                        resampleAlg="near", # Use 'near' for categorical data like land cover
-                        creationOptions=["COMPRESS=LZW", "TILED=YES"]
-                    )
+            reproject = True
+            shapes = shapes.to_crs(src.crs)
         
-            gdal.Warp(raster_path, raster_path, options=warp_options)
         out_image, out_transform = rasterio.mask.mask(src, shapes, crop=True)
         out_meta = src.meta.copy()
 
@@ -81,6 +87,9 @@ def mask_raster_with_geometry(raster_path, shapes, output_path):
 
     with rasterio.open(output_path, "w", **out_meta) as dest:
         dest.write(out_image)
+    
+    if reproject:
+        reproject_raster(output_path, output_path)
     
     print(f"Masked raster saved to {output_path}")
 
@@ -101,14 +110,7 @@ def merge_rasters(raster_paths, output_path, method='gdal'):
         vrt = gdal.BuildVRT('', raster_paths)
         gdal.Translate(output_path, vrt)
         vrt = None
-        warp_options = gdal.WarpOptions(
-                        format="GTiff",
-                        dstSRS="EPSG:4326",
-                        resampleAlg="near", # Use 'near' for categorical data like land cover
-                        creationOptions=["COMPRESS=LZW", "TILED=YES"]
-                    )
-        
-        gdal.Warp(output_path, output_path, options=warp_options)
+        reproject_raster(output_path, output_path)
     elif method == 'rasterio':
         print(f"Merging {len(raster_paths)} rasters into {output_path} using Rasterio (Sequential mode)")
         
