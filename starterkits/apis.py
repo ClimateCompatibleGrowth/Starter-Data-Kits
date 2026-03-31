@@ -465,7 +465,6 @@ def get_country_energy_links(country_name, search_query="medium voltage", file_n
                 })
             results.append(dataset_info)
         for file in results[0]['files']:
-            print(file)
             if file['name'] == file_name:
                 url = file['url']
         return url
