@@ -475,16 +475,25 @@ def get_country_energy_links(country_name, search_query="medium voltage", file_n
 
 @handle_exceptions
 def get_wind_profile(country):
-    country_name = pycountry.countries.get(alpha_3=country).name # type: ignore
-    url = get_country_energy_links(country_name, f"{country} Global Electrification Platform", 
-                                   file_name='GEP V2 Wind Resource')
-    download_file(url, f'Data/{country}/Wind speed/{country}_wind_profile.csv', 'Wind profile')
+    alpha_2 = pycountry.countries.get(alpha_3=country).alpha_2 # type: ignore
+    download_file(f"https://geospatialsdk.s3.us-east-1.amazonaws.com/pv_wind/{alpha_2}-2-wind.csv", f'Data/{country}/Wind profile/{alpha_2}-2-wind.csv', 'Wind profile')
 
 @handle_exceptions
 def get_solar_profile(country):
-    country_name = pycountry.countries.get(alpha_3=country).name # type: ignore
-    url = get_country_energy_links(country_name, f"{country} Global Electrification Platform", 
-                                   file_name='GEP V2 Solar Resource')
-    download_file(url, f'Data/{country}/Solar irradiation/{country}_solar_profile.csv', 'Solar profile')
+    alpha_2 = pycountry.countries.get(alpha_3=country).alpha_2 # type: ignore
+    download_file(f"https://geospatialsdk.s3.us-east-1.amazonaws.com/pv_wind/{alpha_2}-2-pv.csv", f'Data/{country}/Solar profile/{alpha_2}-2-pv.csv', 'Solar profile')
 
-    
+@handle_exceptions
+def get_settlements(country):
+    os.makedirs(f'Data/{country}/Settlements', exist_ok=True)
+    if country == 'COG':
+      country_name = 'Republic_of_Congo'
+    elif country == 'COD':
+      country_name = 'DRC'
+    elif country == 'CIV':
+      country_name = 'Ivory_Coast'
+    else:
+      country_name = pycountry.countries.get(alpha_3=country).name # type: ignore
+    country_name = country_name.replace(' ', '_')
+    download_file(f"https://geospatialsdk.s3.us-east-1.amazonaws.com/Settlements/{country_name}.zip", f'Data/{country}/Settlements/{country_name}_settlements.zip', 'Settlements')
+    unzip_file(f'Data/{country}/Settlements/{country_name}_settlements.zip', f'Data/{country}/Settlements')
