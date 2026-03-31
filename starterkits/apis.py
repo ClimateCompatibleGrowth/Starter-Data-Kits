@@ -476,12 +476,12 @@ def get_country_energy_links(country_name, search_query="medium voltage", file_n
 @handle_exceptions
 def get_wind_profile(country):
     alpha_2 = pycountry.countries.get(alpha_3=country).alpha_2 # type: ignore
-    download_file(f"https://geospatialsdk.s3.us-east-1.amazonaws.com/pv_wind/{alpha_2}-2-wind.csv", f'Data/{country}/Wind profile/{alpha_2}-2-wind.csv', 'Wind profile')
+    download_file(f"https://geospatialsdk.s3.us-east-1.amazonaws.com/Solar_Wind_profiles/{alpha_2}-2-wind.csv", f'Data/{country}/Wind profile/{alpha_2}-2-wind.csv', 'Wind profile')
 
 @handle_exceptions
 def get_solar_profile(country):
     alpha_2 = pycountry.countries.get(alpha_3=country).alpha_2 # type: ignore
-    download_file(f"https://geospatialsdk.s3.us-east-1.amazonaws.com/pv_wind/{alpha_2}-2-pv.csv", f'Data/{country}/Solar profile/{alpha_2}-2-pv.csv', 'Solar profile')
+    download_file(f"https://geospatialsdk.s3.us-east-1.amazonaws.com/Solar_Wind_profiles/{alpha_2}-2-pv.csv", f'Data/{country}/Solar profile/{alpha_2}-2-pv.csv', 'Solar profile')
 
 @handle_exceptions
 def get_settlements(country):
