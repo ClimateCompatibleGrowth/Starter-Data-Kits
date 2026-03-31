@@ -181,7 +181,13 @@ def get_solar_data(country):
       country_name = 'Cote d Ivoire'
     else:
       country_name = pycountry.countries.get(alpha_3=country).name # type: ignore
-    download_file(f"https://api.globalsolaratlas.info/download/{country_name}/{country_name.replace(' ', '-')}_GISdata_LTAym_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF.zip", f'Data/{country}/Solar irradiation/{country}_solar_irradiance.zip', 'Solar irradiation')
+    try:
+      download_file(f"https://api.globalsolaratlas.info/download/{country_name}/{country_name.replace(' ', '-')}_GISdata_LTAym_YearlyMonthlyTotals_GlobalSolarAtlas-v2_GEOTIFF.zip", f'Data/{country}/Solar irradiation/{country}_solar_irradiance.zip', 'Solar irradiation')
+    except:
+      try:
+        download_file(f"https://api.globalsolaratlas.info/download/{country_name}/{country_name.replace(' ', '-')}_GHI_GISdata_LTAym_DailySum_EnhancedAccuracy_GlobalSolarAtlas_GEOTIFF.zip", f'Data/{country}/Solar irradiation/{country}_solar_irradiance.zip', 'Solar irradiation')
+      except:
+        print(f"No solar data found for {country}")
     unzip_file(f'Data/{country}/Solar irradiation/{country}_solar_irradiance.zip', f'Data/{country}/Solar irradiation')
   
 @handle_exceptions
@@ -475,12 +481,12 @@ def get_country_energy_links(country_name, search_query="medium voltage", file_n
 
 @handle_exceptions
 def get_wind_profile(country):
-    alpha_2 = pycountry.countries.get(alpha_3=country).alpha_2 # type: ignore
+    alpha_2 = pycountry.countries.get(alpha_3=country).alpha_2.lower() # type: ignore
     download_file(f"https://geospatialsdk.s3.us-east-1.amazonaws.com/Solar_Wind_profiles/{alpha_2}-2-wind.csv", f'Data/{country}/Wind profile/{alpha_2}-2-wind.csv', 'Wind profile')
 
 @handle_exceptions
 def get_solar_profile(country):
-    alpha_2 = pycountry.countries.get(alpha_3=country).alpha_2 # type: ignore
+    alpha_2 = pycountry.countries.get(alpha_3=country).alpha_2.lower() # type: ignore
     download_file(f"https://geospatialsdk.s3.us-east-1.amazonaws.com/Solar_Wind_profiles/{alpha_2}-2-pv.csv", f'Data/{country}/Solar profile/{alpha_2}-2-pv.csv', 'Solar profile')
 
 @handle_exceptions
