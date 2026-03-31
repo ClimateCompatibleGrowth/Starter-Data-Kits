@@ -175,3 +175,18 @@ def unzip_file(zip_path, extract_to):
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(extract_to)
     print(f"Extracted {zip_path} to {extract_to}")
+
+
+def get_osm_points(amenity_type, bounding_box):
+    # bounding_box = (min_lat, min_lon, max_lat, max_lon)
+    overpass_url = "http://overpass-api.de/api/interpreter"
+    overpass_query = f"""
+    [out:json];
+    (
+      node["amenity"="{amenity_type}"]({bounding_box[0]},{bounding_box[1]},{bounding_box[2]},{bounding_box[3]});
+    );
+    out body;
+    """
+    response = requests.get(overpass_url, params={'data': overpass_query})
+    data = response.json()
+    return pd.DataFrame(data['elements'])

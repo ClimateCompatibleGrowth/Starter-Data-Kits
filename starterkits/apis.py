@@ -104,7 +104,10 @@ def get_specs(country):
         country (str): ISO3 country code.
     """
     os.makedirs(f'Data/{country}/Specs', exist_ok=True)
-    download_file(f'https://geospatialsdk.s3.amazonaws.com/OnSSET_specs/{country}_data.yaml', f'Data/{country}/Specs/{country}_data.yaml', 'Specs')
+    url = get_country_energy_links(country, f"{country} Global Electrification Platform", 
+                                   file_name='GEP V2 Energy Modeling Parameters')
+    download_file(url, f'Data/{country}/Specs/{country}_data.pdf', 'Specs')
+    # download_file(f'https://geospatialsdk.s3.amazonaws.com/OnSSET_specs/{country}_data.yaml', f'Data/{country}/Specs/{country}_data.yaml', 'Specs')
 
 @handle_exceptions
 def get_boundaries(country):
@@ -423,3 +426,63 @@ def get_traveltime_data(country):
     mask_raster_with_geometry(f'Data/{country}/Traveltime/{country}_traveltime.tif', 
                               boundaries, 
                               f'Data/{country}/Traveltime/{country}_traveltime.tif')
+
+
+@handle_exceptions
+def get_country_energy_links(country_name, search_query="medium voltage", file_name='GEP V2 Energy Modeling Parameters'):
+    """
+    Finds direct download links for datasets matching a query for a specific country.
+    """
+    api_url = "https://energydata.info/api/3/action/package_search"
+    
+    # Filter by country name in the portal's specific vocabulary field
+    # and search for keywords in the general query
+    params = {
+        'q': search_query + ' ' + country_name,
+        'rows': 50  # Adjust as needed
+    }
+    
+    try:
+        response = requests.get(api_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        
+        if not data['success'] or data['result']['count'] == 0:
+            return f"No datasets found for '{country_name}' with query '{search_query}'."
+
+        results = []
+        for dataset in data['result']['results']:
+            dataset_info = {
+                'title': dataset['title'],
+                'files': []
+            }
+            # Extract direct links from resources
+            for resource in dataset.get('resources', []):
+                dataset_info['files'].append({
+                    'name': resource.get('name'),
+                    'format': resource.get('format'),
+                    'url': resource.get('url')
+                })
+            results.append(dataset_info)
+        for file in results[0]['files']:
+            print(file)
+            if file['name'] == file_name:
+                url = file['url']
+        return url
+
+    except Exception as e:
+        return f"Error connecting to API: {e}"
+
+@handle_exceptions
+def get_wind_profile(country):
+    url = get_country_energy_links(country, f"{country} Global Electrification Platform", 
+                                   file_name='GEP V2 Wind Resource')
+    download_file(url, f'Data/{country}/Wind speed/{country}_wind_profile.csv', 'Wind profile')
+
+@handle_exceptions
+def get_solar_profile(country):
+    url = get_country_energy_links(country, f"{country} Global Electrification Platform", 
+                                   file_name='GEP V2 Solar Resource')
+    download_file(url, f'Data/{country}/Solar irradiation/{country}_solar_profile.csv', 'Solar profile')
+
+    
