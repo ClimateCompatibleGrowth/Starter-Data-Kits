@@ -104,7 +104,8 @@ def get_specs(country):
         country (str): ISO3 country code.
     """
     os.makedirs(f'Data/{country}/Specs', exist_ok=True)
-    url = get_country_energy_links(country, f"{country} Global Electrification Platform", 
+    country_name = pycountry.countries.get(alpha_3=country).name # type: ignore
+    url = get_country_energy_links(country_name, f"{country} Global Electrification Platform", 
                                    file_name='GEP V2 Energy Modeling Parameters')
     download_file(url, f'Data/{country}/Specs/{country}_data.pdf', 'Specs')
     # download_file(f'https://geospatialsdk.s3.amazonaws.com/OnSSET_specs/{country}_data.yaml', f'Data/{country}/Specs/{country}_data.yaml', 'Specs')
@@ -474,13 +475,15 @@ def get_country_energy_links(country_name, search_query="medium voltage", file_n
 
 @handle_exceptions
 def get_wind_profile(country):
-    url = get_country_energy_links(country, f"{country} Global Electrification Platform", 
+    country_name = pycountry.countries.get(alpha_3=country).name # type: ignore
+    url = get_country_energy_links(country_name, f"{country} Global Electrification Platform", 
                                    file_name='GEP V2 Wind Resource')
     download_file(url, f'Data/{country}/Wind speed/{country}_wind_profile.csv', 'Wind profile')
 
 @handle_exceptions
 def get_solar_profile(country):
-    url = get_country_energy_links(country, f"{country} Global Electrification Platform", 
+    country_name = pycountry.countries.get(alpha_3=country).name # type: ignore
+    url = get_country_energy_links(country_name, f"{country} Global Electrification Platform", 
                                    file_name='GEP V2 Solar Resource')
     download_file(url, f'Data/{country}/Solar irradiation/{country}_solar_profile.csv', 'Solar profile')
 
